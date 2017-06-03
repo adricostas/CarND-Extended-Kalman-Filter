@@ -1,9 +1,11 @@
 #include <math.h>       /* atan2 */
 #include "kalman_filter.h"
-
+#include <iostream>
 #define EPS 0.0001
+#define PI 3.1416
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
+using namespace std;
 
 KalmanFilter::KalmanFilter() {}
 
@@ -36,17 +38,8 @@ void KalmanFilter::Update(const VectorXd &z) {
   */
   VectorXd z_pred = H_ * x_;
   VectorXd y = z - z_pred;
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S = H_ * P_ * Ht + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
+  KF(y);
 
-  //new estimate
-  x_ = x_ + (K * y);
-  long x_size = x_.size();
-  MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * H_) * P_;
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
@@ -54,34 +47,42 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   TODO:
     * update the state by using Extended Kalman Filter equations
   */
-   if (fabs(x_(0)) < EPS ){
-		x_(0) = EPS;
-		
-}
-if ( fabs(x_(1)) < EPS){
-		
-	x_(1) = EPS;
-}
-  float rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
-  float phi = atan2(x_(1), x_(0));
-  float rho_dot;
+
+  double rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
+  double phi = atan2(x_(1), x_(0));
+  double rho_dot;
+
   if (fabs(rho) < EPS) {
-    rho_dot = 0;
-  } else {
-    rho_dot = (x_(0)*x_(2) + x_(1)*x_(3))/rho;
-  }
+    rho = EPS;
+  } 
+    
+  rho_dot = (x_(0)*x_(2) + x_(1)*x_(3))/rho;
+  
   VectorXd z_pred(3);
   z_pred << rho, phi, rho_dot;
   VectorXd y = z - z_pred;
-  MatrixXd Ht = H_.transpose();
+  KF(y);
+
+
+}
+
+// Universal update Kalman Filter step.
+void KalmanFilter::KF( VectorXd &y){
+//Normalization of angles
+  if ( y(1) > PI){
+	y(1) = y(1)-2*PI;
+}
+  if ( y(1) < -PI){
+	y(1) = y(1) + 2*PI;
+}  
+MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd PHt = P_ * Ht;
-  MatrixXd K = PHt * Si;
-
-  //new estimate
+  MatrixXd K =  P_ * Ht * Si;
+  // New state
   x_ = x_ + (K * y);
-  long x_size = x_.size();
+  int x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
 }
+

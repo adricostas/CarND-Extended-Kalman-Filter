@@ -95,17 +95,17 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       /**
        Convert radar from polar to cartesian coordinates and initialize state.
       */
-      float rho     = measurement_pack.raw_measurements_(0);
-      float phi    = measurement_pack.raw_measurements_(1);
-      float rho_dot = measurement_pack.raw_measurements_(2);
-      if (fabs(rho) < EPS ){
+      double rho     = measurement_pack.raw_measurements_(0);
+      double phi    = measurement_pack.raw_measurements_(1);
+      double rho_dot = measurement_pack.raw_measurements_(2);
+ /*     if (fabs(rho) < EPS ){
 		rho = EPS;
 		
 	}
  if (rho_dot < EPS ){
 		rho_dot = EPS;
 		
-}
+}*/
       ekf_.x_(0) = rho     * cos(phi);
       ekf_.x_(1) = rho     * sin(phi);      
       ekf_.x_(2) = rho_dot * cos(phi);
@@ -141,20 +141,20 @@ if ( fabs(ekf_.x_(1)) < EPS){
    */
 
   //compute the time elapsed between the current and previous measurements
-  float dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
+  double dt = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;	//dt - expressed in seconds
   previous_timestamp_ = measurement_pack.timestamp_;
 
-  float dt_2 = dt   * dt;
-  float dt_3 = dt_2 * dt;
-  float dt_4 = dt_3 * dt;
+  double dt_2 = dt   * dt;
+  double dt_3 = dt_2 * dt;
+  double dt_4 = dt_3 * dt;
 
   //Modify the F matrix so that the time is integrated
   ekf_.F_(0, 2) = dt;
   ekf_.F_(1, 3) = dt;
 
   //set the acceleration noise components
-  float noise_ax = 9.0;
-  float noise_ay = 9.0;
+  double noise_ax = 9.0;
+  double noise_ay = 9.0;
 
   //set the process covariance matrix Q
   ekf_.Q_ = MatrixXd(4, 4);
@@ -190,7 +190,9 @@ if ( fabs(ekf_.x_(1)) < EPS){
   }
 
   // print the output
+
   cout << "x_ = " << ekf_.x_ << endl;
   cout << "P_ = " << ekf_.P_ << endl;
+  
 
 }
